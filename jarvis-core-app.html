@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS Core - OpenClaw Command Center</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #132f4c 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 60px 1fr 80px;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            grid-column: 1;
+            grid-row: 1 / -1;
+            background: linear-gradient(180deg, #0d1b2a 0%, #1a2332 100%);
+            border-right: 2px solid rgba(0, 188, 212, 0.3);
+            padding: 20px 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 0 15px 20px;
+            border-bottom: 1px solid rgba(0, 188, 212, 0.2);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .jarvis-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #00bcd4, #0097a7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 0 15px rgba(0, 188, 212, 0.5);
+        }
+
+        .sidebar-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00bcd4;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 0 10px;
+            margin-bottom: 20px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 188, 212, 0.1);
+            border-left-color: #00bcd4;
+        }
+
+        .nav-item.active {
+            background: rgba(0, 188, 212, 0.2);
+            border-left-color: #00bcd4;
+            color: #00bcd4;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid rgba(0, 188, 212, 0.2);
+            margin-top: auto;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            grid-column: 2;
+            grid-row: 1;
+            background: linear-gradient(90deg, rgba(10, 25, 41, 0.8), rgba(19, 47, 76, 0.8));
+            border-bottom: 2px solid rgba(0, 188, 212, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .digital-clock {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+        }
+
+        .date-text {
+            font-size: 12px;
+            color: #90caf9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            padding: 30px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .content-left {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: linear-gradient(135deg, rgba(25, 45, 65, 0.8), rgba(33, 50, 73, 0.8));
+            border: 1px solid rgba(0, 188, 212, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00bcd4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .status-item {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.15);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .status-label {
+            color: #90caf9;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            color: #00bcd4;
+            font-weight: bold;
+        }
+
+        .jarvis-core {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 250px;
+            position: relative;
+        }
+
+        .core-sphere {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(0, 188, 212, 0.8), rgba(0, 150, 167, 0.4));
+            box-shadow: 0 0 30px rgba(0, 188, 212, 0.6), inset -20px -20px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: rotate 20s linear infinite;
+            position: relative;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .core-text {
+            text-align: center;
+            font-weight: bold;
+            color: #00bcd4;
+            text-shadow: 0 0 20px rgba(0, 188, 212, 0.8);
+            z-index: 2;
+        }
+
+        .session-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .info-box {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.15);
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 11px;
+        }
+
+        .info-label {
+            color: #90caf9;
+            font-size: 10px;
+        }
+
+        .info-value {
+            color: #e0e0e0;
+            font-weight: bold;
+            margin-top: 3px;
+        }
+
+        .live-feed {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .feed-item {
+            background: rgba(0, 188, 212, 0.05);
+            border-left: 3px solid #4caf50;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .feed-time {
+            color: #90caf9;
+            font-size: 10px;
+            margin-top: 3px;
+        }
+
+        .action-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .log-entry {
+            background: rgba(0, 188, 212, 0.05);
+            border-left: 2px solid #00bcd4;
+            padding: 8px;
+            margin-bottom: 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-time {
+            color: #90caf9;
+            font-size: 9px;
+        }
+
+        .log-action {
+            color: #00bcd4;
+            margin-top: 2px;
+        }
+
+        /* ===== COMMAND BAR ===== */
+        .command-bar {
+            grid-column: 2;
+            grid-row: 3;
+            background: linear-gradient(90deg, rgba(10, 25, 41, 0.95), rgba(19, 47, 76, 0.95));
+            border-top: 2px solid rgba(0, 188, 212, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            gap: 20px;
+        }
+
+        .command-input {
+            flex: 1;
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            border-radius: 4px;
+            padding: 10px 15px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .command-input::placeholder {
+            color: rgba(224, 224, 224, 0.5);
+        }
+
+        .voice-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #00bcd4, #0097a7);
+            border: 2px solid rgba(0, 188, 212, 0.5);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 188, 212, 0.4);
+        }
+
+        .voice-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 188, 212, 0.6);
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #90caf9;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 188, 212, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 188, 212, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 188, 212, 0.5);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        .loading {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="jarvis-logo">J</div>
+                <div>
+                    <div class="sidebar-title">JARVIS</div>
+                    <div style="font-size: 10px; color: #90caf9;">Core v2.1</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-item active">Dashboard</div>
+                <div class="nav-item">Sessions</div>
+                <div class="nav-item">Tools</div>
+                <div class="nav-item">Memory</div>
+                <div class="nav-item">Tasks</div>
+                <div class="nav-item">Settings</div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div style="font-size: 11px; color: #90caf9; text-align: center;">
+                    <div style="margin-bottom: 10px;">🎤 Voice Ready</div>
+                    <div style="font-size: 10px;">Auto-refresh: <span id="refresh-status">ON</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="system-status">Loading...</span>
+                </div>
+                <div>
+                    <div class="digital-clock" id="clock">--:--</div>
+                    <div class="date-text" id="date">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="content-left">
+                <!-- System Status -->
+                <div class="panel">
+                    <div class="panel-title">🧠 OpenClaw Status</div>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-label">Gateway</div>
+                            <div class="status-value" id="gateway-status">Connecting...</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Uptime</div>
+                            <div class="status-value" id="uptime">--:--</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Model</div>
+                            <div class="status-value" id="model-name">Loading...</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Sessions</div>
+                            <div class="status-value" id="session-count">--</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Token Usage</div>
+                            <div class="status-value" id="token-usage">-- / --</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Cache Hit</div>
+                            <div class="status-value" id="cache-hit">--%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JARVIS Core -->
+                <div class="panel" style="min-height: 300px; display: flex; flex-direction: column; justify-content: center;">
+                    <div class="panel-title">⚡ JARVIS Core</div>
+                    <div class="jarvis-core">
+                        <div class="core-sphere">
+                            <div class="core-text">
+                                JARVIS
+                                <div style="font-size: 12px; margin-top: 5px;">AI CORE</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="session-info">
+                        <div class="info-box">
+                            <div class="info-label">Session ID</div>
+                            <div class="info-value" id="session-id" style="font-size: 9px; word-break: break-all;">--</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Context Usage</div>
+                            <div class="info-value" id="context-usage">--%</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Cost (Today)</div>
+                            <div class="info-value" id="cost-today">$--</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Tools Ready</div>
+                            <div class="info-value" id="tools-ready">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Log -->
+                <div class="panel">
+                    <div class="panel-title">📋 Action Log</div>
+                    <div class="action-log" id="action-log">
+                        <div class="log-entry">
+                            <div class="log-time">Initializing...</div>
+                            <div class="log-action">JARVIS Core starting up</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDEBAR -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Live Feed -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <span style="color: #4caf50; font-size: 10px;">● LIVE</span>
+                        System Feed
+                    </div>
+                    <div class="live-feed" id="live-feed">
+                        <div class="feed-item">
+                            <div>⏳ Connecting to gateway...</div>
+                            <div class="feed-time">just now</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="panel">
+                    <div class="panel-title">⚡ Quick Actions</div>
+                    <div style="display: grid; gap: 8px;">
+                        <button onclick="executeCommand('status')" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">Get Status</button>
+                        <button onclick="executeCommand('sessions')" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">List Sessions</button>
+                        <button onclick="refreshData()" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">Refresh Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMMAND BAR -->
+        <div class="command-bar">
+            <input type="text" class="command-input" id="command-input" placeholder="Enter command or ask JARVIS..." onkeypress="handleCommandKey(event)">
+            <button class="voice-button" onclick="toggleVoice()" title="Voice Command">🎤</button>
+            <div class="status-right">
+                <span id="api-status">●</span>
+                <span id="api-status-text">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const GATEWAY_HOST = window.location.hostname || 'localhost';
+        const GATEWAY_PORT = window.location.port || '18789';
+        const GATEWAY_URL = `http://${GATEWAY_HOST}:${GATEWAY_PORT}`;
+        const GATEWAY_TOKEN = 'T8yvdL…kyOa'; // From config - in production this should be passed securely
+
+        let actionLog = [];
+        let autoRefreshInterval = null;
+
+        // Initialize
+        function init() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            loadSystemStatus();
+            startAutoRefresh();
+            addLogEntry('System', 'JARVIS Core initialized');
+        }
+
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+            document.getElementById('date').textContent = `${days[now.getDay()]}, ${monthsShort[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+        }
+
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await apiCall('session_status', {});
+                
+                if (response) {
+                    document.getElementById('gateway-status').textContent = '✓ Connected';
+                    document.getElementById('gateway-status').style.color = '#4caf50';
+                    document.getElementById('api-status').textContent = '●';
+                    document.getElementById('api-status').style.color = '#4caf50';
+                    document.getElementById('api-status-text').textContent = 'Ready';
+                    
+                    // Parse response to extract data
+                    const text = JSON.stringify(response);
+                    
+                    // Try to extract model name
+                    if (response.model) {
+                        const modelName = response.model.split('/').pop();
+                        document.getElementById('model-name').textContent = modelName;
+                    }
+                    
+                    addLogEntry('Gateway', 'Connected successfully');
+                    
+                    // Load additional data
+                    loadSessionData();
+                } else {
+                    setGatewayError('No response');
+                }
+            } catch (error) {
+                console.error('Status error:', error);
+                setGatewayError('Connection failed');
+            }
+        }
+
+        // Load session data
+        async function loadSessionData() {
+            try {
+                const response = await apiCall('sessions_list', {});
+                if (response && response.count !== undefined) {
+                    document.getElementById('session-count').textContent = response.count;
+                    addLogEntry('Sessions', `${response.count} session(s) active`);
+                }
+            } catch (error) {
+                console.error('Sessions error:', error);
+            }
+        }
+
+        // API call
+        async function apiCall(tool, args) {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/tools/invoke`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${GATEWAY_TOKEN}`
+                    },
+                    body: JSON.stringify({
+                        tool: tool,
+                        args: args || {}
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error(`API call ${tool} failed:`, error);
+                return null;
+            }
+        }
+
+        // Execute command
+        async function executeCommand(cmd) {
+            addLogEntry('Command', cmd);
+            
+            if (cmd === 'status') {
+                loadSystemStatus();
+            } else if (cmd === 'sessions') {
+                loadSessionData();
+            }
+        }
+
+        // Handle command input
+        function handleCommandKey(event) {
+            if (event.key === 'Enter') {
+                const input = document.getElementById('command-input');
+                if (input.value.trim()) {
+                    executeCommand(input.value);
+                    input.value = '';
+                }
+            }
+        }
+
+        // Voice command
+        function toggleVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert('Voice recognition not supported in this browser');
+                return;
+            }
+            
+            const recognition = new SpeechRecognition();
+            recognition.onstart = () => {
+                addLogEntry('Voice', 'Listening...');
+                document.querySelector('.voice-button').style.boxShadow = '0 0 40px rgba(0, 188, 212, 0.8)';
+            };
+            
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                
+                document.getElementById('command-input').value = transcript;
+                addLogEntry('Voice', transcript);
+                document.querySelector('.voice-button').style.boxShadow = '0 0 20px rgba(0, 188, 212, 0.4)';
+            };
+            
+            recognition.start();
+        }
+
+        // Add log entry
+        function addLogEntry(type, message) {
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            
+            actionLog.unshift({
+                time: time,
+                type: type,
+                message: message
+            });
+            
+            if (actionLog.length > 50) {
+                actionLog.pop();
+            }
+            
+            updateActionLog();
+            updateLiveFeed(type, message, time);
+        }
+
+        // Update action log display
+        function updateActionLog() {
+            const logDiv = document.getElementById('action-log');
+            logDiv.innerHTML = actionLog.map(entry => `
+                <div class="log-entry">
+                    <div class="log-time">${entry.time}</div>
+                    <div class="log-action"><strong>${entry.type}:</strong> ${entry.message}</div>
+                </div>
+            `).join('');
+        }
+
+        // Update live feed
+        function updateLiveFeed(type, message, time) {
+            const feedDiv = document.getElementById('live-feed');
+            const newItem = document.createElement('div');
+            newItem.className = 'feed-item';
+            newItem.innerHTML = `
+                <div>✓ ${message}</div>
+                <div class="feed-time">${time}</div>
+            `;
+            
+            feedDiv.insertBefore(newItem, feedDiv.firstChild);
+            
+            // Keep only last 10 items
+            while (feedDiv.children.length > 10) {
+                feedDiv.removeChild(feedDiv.lastChild);
+            }
+        }
+
+        // Refresh data
+        function refreshData() {
+            addLogEntry('System', 'Refreshing data...');
+            loadSystemStatus();
+            loadSessionData();
+        }
+
+        // Auto refresh
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                loadSystemStatus();
+            }, 10000); // Every 10 seconds
+        }
+
+        // Set gateway error
+        function setGatewayError(message) {
+            document.getElementById('gateway-status').textContent = `✗ ${message}`;
+            document.getElementById('gateway-status').style.color = '#ff6b6b';
+            document.getElementById('api-status').textContent = '●';
+            document.getElementById('api-status').style.color = '#ff6b6b';
+            document.getElementById('api-status-text').textContent = 'Error';
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
