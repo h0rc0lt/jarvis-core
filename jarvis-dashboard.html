@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS Core - OpenClaw Command Center</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a1929 0%, #132f4c 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 60px 1fr 80px;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            grid-column: 1;
+            grid-row: 1 / -1;
+            background: linear-gradient(180deg, #0d1b2a 0%, #1a2332 100%);
+            border-right: 2px solid rgba(0, 188, 212, 0.3);
+            padding: 20px 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 0 15px 20px;
+            border-bottom: 1px solid rgba(0, 188, 212, 0.2);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .jarvis-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #00bcd4, #0097a7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 0 15px rgba(0, 188, 212, 0.5);
+        }
+
+        .sidebar-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00bcd4;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 0 10px;
+            margin-bottom: 20px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 188, 212, 0.1);
+            border-left-color: #00bcd4;
+        }
+
+        .nav-item.active {
+            background: rgba(0, 188, 212, 0.2);
+            border-left-color: #00bcd4;
+            color: #00bcd4;
+        }
+
+        .nav-item::before {
+            content: '●';
+            font-size: 8px;
+            opacity: 0.5;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid rgba(0, 188, 212, 0.2);
+            margin-top: auto;
+        }
+
+        .voice-status {
+            background: rgba(0, 188, 212, 0.1);
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .voice-icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .voice-text {
+            font-size: 11px;
+            color: #00bcd4;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            grid-column: 2;
+            grid-row: 1;
+            background: linear-gradient(90deg, rgba(10, 25, 41, 0.8), rgba(19, 47, 76, 0.8));
+            border-bottom: 2px solid rgba(0, 188, 212, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .digital-clock {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+        }
+
+        .date-text {
+            font-size: 12px;
+            color: #90caf9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-box {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #e0e0e0;
+            width: 200px;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 15px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            padding: 30px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .content-left {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: linear-gradient(135deg, rgba(25, 45, 65, 0.8), rgba(33, 50, 73, 0.8));
+            border: 1px solid rgba(0, 188, 212, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00bcd4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-core-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .core-item {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.15);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .core-label {
+            color: #90caf9;
+            font-size: 11px;
+        }
+
+        .core-status {
+            color: #4caf50;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .jarvis-core {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 250px;
+            position: relative;
+        }
+
+        .core-sphere {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(0, 188, 212, 0.8), rgba(0, 150, 167, 0.4));
+            box-shadow: 
+                0 0 30px rgba(0, 188, 212, 0.6),
+                inset -20px -20px 40px rgba(0, 0, 0, 0.5),
+                inset 20px 20px 40px rgba(0, 188, 212, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: rotate 20s linear infinite;
+            position: relative;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .core-text {
+            text-align: center;
+            font-weight: bold;
+            color: #00bcd4;
+            text-shadow: 0 0 20px rgba(0, 188, 212, 0.8);
+            z-index: 2;
+        }
+
+        .core-version {
+            font-size: 11px;
+            color: #90caf9;
+            margin-top: 5px;
+        }
+
+        .orbit {
+            position: absolute;
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            border-radius: 50%;
+        }
+
+        .orbit-1 {
+            width: 200px;
+            height: 200px;
+            animation: rotate-orbit 30s linear infinite;
+        }
+
+        .orbit-2 {
+            width: 280px;
+            height: 280px;
+            animation: rotate-orbit-rev 45s linear infinite reverse;
+        }
+
+        @keyframes rotate-orbit {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes rotate-orbit-rev {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+        }
+
+        .mission-timeline {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px dashed rgba(0, 188, 212, 0.3);
+            border-radius: 6px;
+            padding: 30px;
+            text-align: center;
+            color: #90caf9;
+        }
+
+        .system-monitors {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .monitor {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.2);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .monitor-label {
+            font-size: 11px;
+            color: #90caf9;
+            margin-bottom: 10px;
+        }
+
+        .monitor-gauge {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(from 180deg, #4caf50 0%, #4caf50 var(--percentage), rgba(0, 188, 212, 0.1) var(--percentage), rgba(0, 188, 212, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            border: 2px solid rgba(0, 188, 212, 0.3);
+        }
+
+        .monitor-value {
+            font-weight: bold;
+            color: #4caf50;
+            font-size: 14px;
+        }
+
+        /* ===== SIDEBAR RIGHT ===== */
+        .content-right {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .live-feed {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .feed-item {
+            background: rgba(0, 188, 212, 0.05);
+            border-left: 3px solid #4caf50;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .feed-time {
+            color: #90caf9;
+            font-size: 10px;
+        }
+
+        .llm-providers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .provider {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.15);
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .provider-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            background: #4caf50;
+            box-shadow: 0 0 6px #4caf50;
+        }
+
+        .provider-name {
+            color: #e0e0e0;
+        }
+
+        /* ===== BOTTOM COMMAND BAR ===== */
+        .command-bar {
+            grid-column: 2;
+            grid-row: 3;
+            background: linear-gradient(90deg, rgba(10, 25, 41, 0.95), rgba(19, 47, 76, 0.95));
+            border-top: 2px solid rgba(0, 188, 212, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            gap: 20px;
+        }
+
+        .command-input {
+            flex: 1;
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.3);
+            border-radius: 4px;
+            padding: 10px 15px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .command-input::placeholder {
+            color: rgba(224, 224, 224, 0.5);
+        }
+
+        .voice-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #00bcd4, #0097a7);
+            border: 2px solid rgba(0, 188, 212, 0.5);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 188, 212, 0.4);
+        }
+
+        .voice-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 188, 212, 0.6);
+        }
+
+        .voice-button:active {
+            transform: scale(0.95);
+        }
+
+        .waveform {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 30px;
+        }
+
+        .wave {
+            width: 2px;
+            background: linear-gradient(180deg, rgba(0, 188, 212, 0.3), rgba(0, 188, 212, 0.8));
+            border-radius: 2px;
+            animation: wave 0.5s ease-in-out infinite;
+        }
+
+        .wave:nth-child(1) { height: 10px; animation-delay: 0s; }
+        .wave:nth-child(2) { height: 20px; animation-delay: 0.1s; }
+        .wave:nth-child(3) { height: 15px; animation-delay: 0.2s; }
+        .wave:nth-child(4) { height: 25px; animation-delay: 0.3s; }
+        .wave:nth-child(5) { height: 18px; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { height: 10px; }
+            50% { height: 30px; }
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #90caf9;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 188, 212, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 188, 212, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 188, 212, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="jarvis-logo">J</div>
+                <div>
+                    <div class="sidebar-title">JARVIS</div>
+                    <div style="font-size: 10px; color: #90caf9;">Core v2.1</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-item active">Dashboard</div>
+                <div class="nav-item">Command Center</div>
+                <div class="nav-item">Chat</div>
+                <div class="nav-item">AI Core</div>
+                <div class="nav-item">Calendar</div>
+                <div class="nav-item">Tasks</div>
+                <div class="nav-item">Workspaces</div>
+                <div class="nav-item">Tools & Skills</div>
+                <div class="nav-item">System Monitor</div>
+                <div class="nav-item">Settings</div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="voice-status">
+                    <div class="voice-icon">🎤</div>
+                    <div class="voice-text">Tap to speak</div>
+                </div>
+                <div style="font-size: 11px; color: #90caf9; text-align: center;">Focus Mode: OFF</div>
+            </div>
+        </div>
+
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>System Operational</span>
+                </div>
+                <div>
+                    <div class="digital-clock" id="clock">14:58</div>
+                    <div class="date-text">Saturday, August 15, 2026</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <input type="text" class="search-box" placeholder="Search commands...">
+                <div class="header-icons">
+                    <span>⚙️</span>
+                    <span>🔔</span>
+                    <span>👤</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="content-left">
+                <!-- AI Core Overview -->
+                <div class="panel">
+                    <div class="panel-title">🧠 AI Core Overview</div>
+                    <div class="ai-core-overview">
+                        <div class="core-item">
+                            <div class="core-label">Core Status</div>
+                            <div class="core-status">Operational</div>
+                        </div>
+                        <div class="core-item">
+                            <div class="core-label">Memory</div>
+                            <div class="core-status">Connected</div>
+                        </div>
+                        <div class="core-item">
+                            <div class="core-label">Voice</div>
+                            <div class="core-status">Ready</div>
+                        </div>
+                        <div class="core-item">
+                            <div class="core-label">Agents</div>
+                            <div class="core-status">1 Active</div>
+                        </div>
+                        <div class="core-item">
+                            <div class="core-label">LLMs</div>
+                            <div class="core-status">Connected</div>
+                        </div>
+                        <div class="core-item">
+                            <div class="core-label">Tools</div>
+                            <div class="core-status">24 Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JARVIS Core Visualization -->
+                <div class="panel" style="min-height: 350px; display: flex; flex-direction: column; justify-content: center;">
+                    <div class="panel-title">⚡ JARVIS Core</div>
+                    <div class="jarvis-core">
+                        <div class="orbit orbit-1"></div>
+                        <div class="orbit orbit-2"></div>
+                        <div class="core-sphere">
+                            <div class="core-text">
+                                JARVIS
+                                <div style="font-size: 12px; margin-top: 5px;">AI CORE</div>
+                            </div>
+                            <div class="core-version">v2.1.0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Monitors & Mission Timeline -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="panel">
+                        <div class="panel-title">📊 System Monitors</div>
+                        <div class="system-monitors">
+                            <div class="monitor">
+                                <div class="monitor-label">CPU</div>
+                                <div class="monitor-gauge" style="--percentage: 45%;">
+                                    <div class="monitor-value">45%</div>
+                                </div>
+                            </div>
+                            <div class="monitor">
+                                <div class="monitor-label">Memory</div>
+                                <div class="monitor-gauge" style="--percentage: 62%;">
+                                    <div class="monitor-value">62%</div>
+                                </div>
+                            </div>
+                            <div class="monitor">
+                                <div class="monitor-label">Disk</div>
+                                <div class="monitor-gauge" style="--percentage: 38%;">
+                                    <div class="monitor-value">38%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-title">🎯 Mission Timeline</div>
+                        <div class="mission-timeline">
+                            <div>◉ Nothing scheduled today</div>
+                            <div style="margin-top: 10px; font-size: 12px;">
+                                <button style="background: rgba(0, 188, 212, 0.2); border: 1px solid rgba(0, 188, 212, 0.5); color: #00bcd4; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">+ Add to Schedule</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDEBAR -->
+            <div class="content-right">
+                <!-- Live Intelligence Feed -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <span style="color: #4caf50; font-size: 10px;">● LIVE</span>
+                        Intelligence Feed
+                    </div>
+                    <div class="live-feed">
+                        <div class="feed-item">
+                            <div>✓ OpenClaw Connected</div>
+                            <div class="feed-time">just now</div>
+                        </div>
+                        <div class="feed-item">
+                            <div>✓ Gateway Running (27m)</div>
+                            <div class="feed-time">2 mins ago</div>
+                        </div>
+                        <div class="feed-item">
+                            <div>✓ Model: Minimax M2.5</div>
+                            <div class="feed-time">5 mins ago</div>
+                        </div>
+                        <div class="feed-item">
+                            <div>✓ Cache Hit: 93%</div>
+                            <div class="feed-time">8 mins ago</div>
+                        </div>
+                        <div class="feed-item">
+                            <div>✓ Session Active (16m)</div>
+                            <div class="feed-time">12 mins ago</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LLM Status -->
+                <div class="panel">
+                    <div class="panel-title">🤖 LLM Status</div>
+                    <div class="llm-providers">
+                        <div class="provider">
+                            <div><span class="provider-dot"></span></div>
+                            <div class="provider-name">Claude</div>
+                        </div>
+                        <div class="provider">
+                            <div><span class="provider-dot"></span></div>
+                            <div class="provider-name">Gemini</div>
+                        </div>
+                        <div class="provider">
+                            <div><span class="provider-dot"></span></div>
+                            <div class="provider-name">Groq</div>
+                        </div>
+                        <div class="provider">
+                            <div><span class="provider-dot"></span></div>
+                            <div class="provider-name">OpenAI</div>
+                        </div>
+                        <div class="provider">
+                            <div><span class="provider-dot"></span></div>
+                            <div class="provider-name">Minimax</div>
+                        </div>
+                        <div class="provider">
+                            <div><span class="provider-dot"></span></div>
+                            <div class="provider-name">OpenRouter</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; text-align: center;">
+                        <button style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px;">Manage</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMMAND BAR -->
+        <div class="command-bar">
+            <input type="text" class="command-input" placeholder="Enter command or ask JARVIS...">
+            <div class="waveform">
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+            </div>
+            <button class="voice-button">🎤</button>
+            <div class="status-right">
+                <span>●</span>
+                <span>Connected</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Interactive elements
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelector('.voice-button').addEventListener('click', function() {
+            this.style.animation = 'pulse 0.3s ease-in-out';
+            setTimeout(() => {
+                this.style.animation = '';
+            }, 300);
+        });
+
+        document.querySelector('.command-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                console.log('Command:', this.value);
+                this.value = '';
+            }
+        });
+    </script>
+</body>
+</html>
