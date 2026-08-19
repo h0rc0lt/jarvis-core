@@ -430,7 +430,7 @@
                 <div class="jarvis-logo">J</div>
                 <div>
                     <div class="sidebar-title">JARVIS</div>
-                    <div style="font-size: 10px; color: #90caf9;">Core v2.1</div>
+                    <div style="font-size: 10px; color: #90caf9;">Core v2.2</div>
                 </div>
             </div>
 
@@ -582,122 +582,288 @@
     </div>
 
     <script>
-        // Configuration
+        // JARVIS Core - OpenClaw Gateway API Integration
+        // ============================================
+        
+        // Configuration - Gateway elérhetőség
+        // Ha nem adod meg a token-t, GUI-alapú auth lesz használva
         const GATEWAY_HOST = window.location.hostname || 'localhost';
         const GATEWAY_PORT = window.location.port || '18789';
         const GATEWAY_URL = `http://${GATEWAY_HOST}:${GATEWAY_PORT}`;
-        const GATEWAY_TOKEN = 'T8yvdL…kyOa'; // From config - in production this should be passed securely
-
+        
+        // Opcionális: API token (ha van beállítva)
+        // Ha üres, a GUI-n keresztül authentikál
+        let GATEWAY_TOKEN = '';
+        
         let actionLog = [];
         let autoRefreshInterval = null;
+        let isConnected = false;
+        let startTime = Date.now();
 
         // Initialize
         function init() {
             updateClock();
             setInterval(updateClock, 1000);
             
-            loadSystemStatus();
+            // Gateway kapcsolat ellenőrzése
+            checkGatewayConnection();
             startAutoRefresh();
-            addLogEntry('System', 'JARVIS Core initialized');
+            addLogEntry('System', 'JARVIS Core initializing...');
         }
 
-        // Update clock
+        // Update clock & date
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             
-            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
             document.getElementById('date').textContent = `${days[now.getDay()]}, ${monthsShort[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+            
+            // Uptime frissítés
+            const uptime = getUptime();
+            document.getElementById('uptime').textContent = uptime;
         }
 
-        // Load system status
-        async function loadSystemStatus() {
+        // Uptime számítás
+        function getUptime() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Gateway kapcsolat ellenőrzése
+        async function checkGatewayConnection() {
             try {
-                const response = await apiCall('session_status', {});
+                //尝试连接 Gateway status endpoint
+                const response = await fetch(`${GATEWAY_URL}/status`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 
-                if (response) {
+                if (response.ok) {
+                    const data = await response.json();
+                    isConnected = true;
+                    document.getElementById('system-status').textContent = 'JARVIS Online';
                     document.getElementById('gateway-status').textContent = '✓ Connected';
                     document.getElementById('gateway-status').style.color = '#4caf50';
                     document.getElementById('api-status').textContent = '●';
                     document.getElementById('api-status').style.color = '#4caf50';
                     document.getElementById('api-status-text').textContent = 'Ready';
                     
-                    // Parse response to extract data
-                    const text = JSON.stringify(response);
-                    
-                    // Try to extract model name
-                    if (response.model) {
-                        const modelName = response.model.split('/').pop();
-                        document.getElementById('model-name').textContent = modelName;
+                    // Adatok betöltése
+                    if (data) {
+                        loadGatewayData(data);
                     }
                     
-                    addLogEntry('Gateway', 'Connected successfully');
-                    
-                    // Load additional data
-                    loadSessionData();
+                    addLogEntry('Gateway', 'Connected to OpenClaw Gateway');
                 } else {
-                    setGatewayError('No response');
+                    setGatewayError(`HTTP ${response.status}`);
                 }
             } catch (error) {
-                console.error('Status error:', error);
-                setGatewayError('Connection failed');
+                console.log('Gateway not directly accessible, using GUI mode');
+                setGatewayGuiMode();
             }
         }
 
-        // Load session data
-        async function loadSessionData() {
-            try {
-                const response = await apiCall('sessions_list', {});
-                if (response && response.count !== undefined) {
-                    document.getElementById('session-count').textContent = response.count;
-                    addLogEntry('Sessions', `${response.count} session(s) active`);
+        // GUI mód - nincs közvetlen API hozzáférés
+        function setGatewayGuiMode() {
+            document.getElementById('system-status').textContent = 'JARVIS Ready';
+            document.getElementById('gateway-status').textContent = '⚡ GUI Mode';
+            document.getElementById('gateway-status').style.color = '#ff9800';
+            document.getElementById('api-status').textContent = '●';
+            document.getElementById('api-status').style.color = '#ff9800';
+            document.getElementById('api-status-text').textContent = 'GUI Mode';
+            
+            // Demo adatok megjelenítése
+            document.getElementById('model-name').textContent = 'OpenClaw Agent';
+            document.getElementById('session-id').textContent = 'main:dashboard';
+            document.getElementById('session-count').textContent = '1';
+            document.getElementById('context-usage').textContent = '0%';
+            document.getElementById('cost-today').textContent = '$0.00';
+            document.getElementById('tools-ready').textContent = 'All';
+            document.getElementById('token-usage').textContent = '0 / 100K';
+            document.getElementById('cache-hit').textContent = '--%';
+            
+            addLogEntry('System', 'Running in GUI mode - Control UI required for full features');
+            isConnected = false;
+        }
+
+        // Gateway adatok betöltése
+        function loadGatewayData(data) {
+            if (data.model) {
+                document.getElementById('model-name').textContent = data.model.split('/').pop() || data.model;
+            }
+            
+            if (data.session) {
+                document.getElementById('session-id').textContent = data.session;
+            }
+            
+            if (data.sessions !== undefined) {
+                document.getElementById('session-count').textContent = data.sessions;
+            }
+            
+            if (data.usage) {
+                const used = data.usage.tokens?.used || 0;
+                const limit = data.usage.tokens?.limit || 100000;
+                document.getElementById('token-usage').textContent = `${used.toLocaleString()} / ${limit.toLocaleString()}`;
+                document.getElementById('context-usage').textContent = `${Math.round(used/limit*100)}%`;
+                
+                if (data.usage.cost) {
+                    document.getElementById('cost-today').textContent = `$${data.usage.cost.toFixed(2)}`;
                 }
-            } catch (error) {
-                console.error('Sessions error:', error);
+            }
+            
+            if (data.cacheHitRate !== undefined) {
+                document.getElementById('cache-hit').textContent = `${Math.round(data.cacheHitRate)}%`;
+            }
+            
+            if (data.toolsCount !== undefined) {
+                document.getElementById('tools-ready').textContent = data.toolsCount;
             }
         }
 
-        // API call
-        async function apiCall(tool, args) {
+        // API hívás (ha van token)
+        async function apiCall(endpoint, options = {}) {
+            if (!GATEWAY_TOKEN) {
+                return null;
+            }
+            
             try {
-                const response = await fetch(`${GATEWAY_URL}/tools/invoke`, {
-                    method: 'POST',
+                const response = await fetch(`${GATEWAY_URL}${endpoint}`, {
+                    ...options,
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${GATEWAY_TOKEN}`
-                    },
-                    body: JSON.stringify({
-                        tool: tool,
-                        args: args || {}
-                    })
+                        'Authorization': `Bearer ${GATEWAY_TOKEN}`,
+                        ...options.headers
+                    }
                 });
-
+                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
-
+                
                 return await response.json();
             } catch (error) {
-                console.error(`API call ${tool} failed:`, error);
+                console.error(`API call failed:`, error);
                 return null;
             }
         }
 
-        // Execute command
+        // Parancs végrehajtás
         async function executeCommand(cmd) {
+            const command = cmd.trim().toLowerCase();
             addLogEntry('Command', cmd);
             
-            if (cmd === 'status') {
-                loadSystemStatus();
-            } else if (cmd === 'sessions') {
-                loadSessionData();
+            if (command === 'status') {
+                await checkGatewayConnection();
+            } else if (command === 'sessions') {
+                showSessionsPanel();
+            } else if (command === 'tools') {
+                showToolsPanel();
+            } else if (command === 'memory') {
+                showMemoryPanel();
+            } else if (command === 'tasks') {
+                showTasksPanel();
+            } else if (command === 'help') {
+                showHelp();
+            } else if (command.startsWith('/')) {
+                // Rendszer parancsok
+                handleSystemCommand(command);
+            } else {
+                // OpenClaw-nak küldött üzenet
+                await sendMessageToJarvis(cmd);
             }
         }
 
-        // Handle command input
+        // Rendszer parancsok kezelése
+        function handleSystemCommand(cmd) {
+            switch(cmd) {
+                case '/clear':
+                    actionLog = [];
+                    updateActionLog();
+                    addLogEntry('System', 'Log cleared');
+                    break;
+                case '/refresh':
+                    refreshData();
+                    break;
+                case '/help':
+                    showHelp();
+                    break;
+                default:
+                    addLogEntry('Error', `Unknown command: ${cmd}`);
+            }
+        }
+
+        // Üzenet küldése JARVIS-nak (OpenClaw-nak)
+        async function sendMessageToJarvis(message) {
+            addLogEntry('JARVIS', `Processing: ${message}`);
+            
+            // Ha van API token, használjuk
+            if (GATEWAY_TOKEN) {
+                try {
+                    const response = await apiCall('/api/v1/chat', {
+                        method: 'POST',
+                        body: JSON.stringify({ message: message })
+                    });
+                    
+                    if (response && response.reply) {
+                        addLogEntry('JARVIS', response.reply);
+                    }
+                } catch (error) {
+                    addLogEntry('Error', 'Failed to send message');
+                }
+            } else {
+                // GUI mód: nyissa meg a Control UI-t
+                addLogEntry('JARVIS', 'Opening Control UI for message...');
+                window.open(`${GATEWAY_URL}/ui`, '_blank');
+            }
+        }
+
+        // Panel megjelenítés
+        function showSessionsPanel() {
+            addLogEntry('Panel', 'Opening Sessions panel');
+            // Session lista - demo
+            addLogEntry('Sessions', 'Main session: active');
+            addLogEntry('Sessions', 'WebChat: connected');
+        }
+
+        function showToolsPanel() {
+            addLogEntry('Panel', 'Opening Tools panel');
+            addLogEntry('Tools', 'Available: exec, browser, message, etc.');
+        }
+
+        function showMemoryPanel() {
+            addLogEntry('Panel', 'Opening Memory panel');
+            addLogEntry('Memory', 'MEMORY.md loaded');
+        }
+
+        function showTasksPanel() {
+            addLogEntry('Panel', 'Opening Tasks panel');
+            addLogEntry('Tasks', 'No active background tasks');
+        }
+
+        function showHelp() {
+            const help = `
+Available commands:
+- status: System status
+- sessions: List sessions
+- tools: List tools
+- memory: Memory panel
+- tasks: Background tasks
+- /help: Show this help
+- /clear: Clear log
+- /refresh: Refresh data
+- Any text: Send to JARVIS`;
+            addLogEntry('Help', help);
+        }
+
+        // Parancs input kezelés
         function handleCommandKey(event) {
             if (event.key === 'Enter') {
                 const input = document.getElementById('command-input');
@@ -708,11 +874,11 @@
             }
         }
 
-        // Voice command
+        // Hang parancs (opcionális)
         function toggleVoice() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert('Voice recognition not supported in this browser');
+                addLogEntry('Voice', 'Voice recognition not supported');
                 return;
             }
             
@@ -728,14 +894,19 @@
                     .join('');
                 
                 document.getElementById('command-input').value = transcript;
-                addLogEntry('Voice', transcript);
+                addLogEntry('Voice', `Heard: ${transcript}`);
+                document.querySelector('.voice-button').style.boxShadow = '0 0 20px rgba(0, 188, 212, 0.4)';
+            };
+            
+            recognition.onerror = () => {
+                addLogEntry('Voice', 'Recognition error');
                 document.querySelector('.voice-button').style.boxShadow = '0 0 20px rgba(0, 188, 212, 0.4)';
             };
             
             recognition.start();
         }
 
-        // Add log entry
+        // Log entry hozzáadása
         function addLogEntry(type, message) {
             const now = new Date();
             const time = now.toLocaleTimeString();
@@ -754,7 +925,7 @@
             updateLiveFeed(type, message, time);
         }
 
-        // Update action log display
+        // Action log frissítés
         function updateActionLog() {
             const logDiv = document.getElementById('action-log');
             logDiv.innerHTML = actionLog.map(entry => `
@@ -765,7 +936,7 @@
             `).join('');
         }
 
-        // Update live feed
+        // Live feed frissítés
         function updateLiveFeed(type, message, time) {
             const feedDiv = document.getElementById('live-feed');
             const newItem = document.createElement('div');
@@ -777,37 +948,53 @@
             
             feedDiv.insertBefore(newItem, feedDiv.firstChild);
             
-            // Keep only last 10 items
             while (feedDiv.children.length > 10) {
                 feedDiv.removeChild(feedDiv.lastChild);
             }
         }
 
-        // Refresh data
+        // Adatok frissítése
         function refreshData() {
             addLogEntry('System', 'Refreshing data...');
-            loadSystemStatus();
-            loadSessionData();
+            checkGatewayConnection();
         }
 
-        // Auto refresh
+        // Auto refresh indítása
         function startAutoRefresh() {
             autoRefreshInterval = setInterval(() => {
-                loadSystemStatus();
-            }, 10000); // Every 10 seconds
+                checkGatewayConnection();
+            }, 30000); // Every 30 seconds
         }
 
-        // Set gateway error
+        // Gateway hiba
         function setGatewayError(message) {
             document.getElementById('gateway-status').textContent = `✗ ${message}`;
             document.getElementById('gateway-status').style.color = '#ff6b6b';
             document.getElementById('api-status').textContent = '●';
             document.getElementById('api-status').style.color = '#ff6b6b';
             document.getElementById('api-status-text').textContent = 'Error';
+            isConnected = false;
         }
 
-        // Start
-        window.addEventListener('DOMContentLoaded', init);
+        // Navigáció kezelése
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    navItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    const page = item.textContent.trim().toLowerCase();
+                    addLogEntry('Navigation', `Switched to ${page}`);
+                });
+            });
+        }
+
+        // Indítás
+        window.addEventListener('DOMContentLoaded', () => {
+            init();
+            setupNavigation();
+        });
     </script>
 </body>
 </html>

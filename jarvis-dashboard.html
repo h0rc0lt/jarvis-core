@@ -776,38 +776,143 @@
     </div>
 
     <script>
-        // Update clock
+        // JARVIS Core Dashboard - Enhanced
+        const GATEWAY_HOST = window.location.hostname || 'localhost';
+        const GATEWAY_PORT = window.location.port || '18789';
+        const GATEWAY_URL = `http://${GATEWAY_HOST}:${GATEWAY_PORT}`;
+        
+        let startTime = Date.now();
+        let actionLog = [];
+
+        // Clock & Date
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Uptime
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const hoursU = Math.floor(elapsed / 3600);
+            const mins = Math.floor((elapsed % 3600) / 60);
+            const secs = elapsed % 60;
+            document.getElementById('uptime').textContent = `${String(hoursU).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
         updateClock();
         setInterval(updateClock, 1000);
 
-        // Interactive elements
+        // Check Gateway Connection
+        async function checkGateway() {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/status`, { method: 'GET' });
+                if (response.ok) {
+                    document.querySelector('.status-right span:last-child').textContent = 'Connected';
+                    document.querySelector('.status-right span:first-child').style.color = '#4caf50';
+                    return true;
+                }
+            } catch (e) {
+                console.log('Gateway not directly accessible');
+            }
+            document.querySelector('.status-right span:last-child').textContent = 'GUI Mode';
+            document.querySelector('.status-right span:first-child').style.color = '#ff9800';
+            return false;
+        }
+
+        checkGateway();
+
+        // Navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function() {
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 this.classList.add('active');
+                addLog('Navigation', `Switched to ${this.textContent.trim()}`);
             });
         });
 
+        // Voice button
         document.querySelector('.voice-button').addEventListener('click', function() {
             this.style.animation = 'pulse 0.3s ease-in-out';
             setTimeout(() => {
                 this.style.animation = '';
             }, 300);
+            
+            // Voice recognition
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.querySelector('.command-input').value = transcript;
+                    addLog('Voice', `Heard: ${transcript}`);
+                };
+                recognition.start();
+            }
         });
 
+        // Command input
         document.querySelector('.command-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && this.value.trim()) {
-                console.log('Command:', this.value);
+                const cmd = this.value.trim();
+                addLog('Command', cmd);
+                
+                if (cmd.startsWith('/')) {
+                    handleSystemCommand(cmd);
+                } else {
+                    addLog('JARVIS', 'Processing message...');
+                    // Open Control UI for message
+                    window.open(`${GATEWAY_URL}/ui`, '_blank');
+                }
                 this.value = '';
             }
         });
+
+        // System commands
+        function handleSystemCommand(cmd) {
+            switch(cmd) {
+                case '/help':
+                    addLog('Help', 'Commands: /status, /sessions, /tools, /memory, /clear, /help');
+                    break;
+                case '/status':
+                    checkGateway();
+                    break;
+                case '/clear':
+                    actionLog = [];
+                    updateFeed();
+                    addLog('System', 'Log cleared');
+                    break;
+                default:
+                    addLog('Error', `Unknown: ${cmd}`);
+            }
+        }
+
+        // Log functions
+        function addLog(type, message) {
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            actionLog.unshift({ type, message, time });
+            if (actionLog.length > 10) actionLog.pop();
+            updateFeed();
+        }
+
+        function updateFeed() {
+            const feed = document.querySelector('.live-feed');
+            if (feed) {
+                feed.innerHTML = actionLog.map(item => `
+                    <div class="feed-item">
+                        <div>✓ ${item.message}</div>
+                        <div class="feed-time">${item.time}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Demo data updater
+        setInterval(() => {
+            // Simulate live updates
+        }, 5000);
     </script>
 </body>
 </html>
