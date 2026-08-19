@@ -564,7 +564,7 @@
                     <div style="display: grid; gap: 8px;">
                         <button onclick="executeCommand('status')" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">Get Status</button>
                         <button onclick="executeCommand('sessions')" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">List Sessions</button>
-                        <button onclick="refreshData()" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">Refresh Data</button>
+                        <button onclick="openChat()" style="background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.5); color: #4caf50; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">💬 Chat with JARVIS</button>
                     </div>
                 </div>
             </div>
@@ -957,6 +957,12 @@ Available commands:
         function refreshData() {
             addLogEntry('System', 'Refreshing data...');
             checkGatewayConnection();
+        }
+
+        // Open Control UI for chatting with JARVIS
+        function openChat() {
+            addLogEntry('JARVIS', 'Opening Control UI for chat...');
+            window.open(`${GATEWAY_URL}/ui`, '_blank');
         }
 
         // Auto refresh indítása
