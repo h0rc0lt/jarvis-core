@@ -582,13 +582,120 @@
             font-size: 10px;
         }
 
-        /* Panel Content Areas */
-        .panel-content {
-            display: none;
+        /* Settings Panel */
+        .settings-section {
+            margin-bottom: 20px;
         }
 
-        .panel-content.active {
-            display: block;
+        .settings-title {
+            font-size: 14px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .settings-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .settings-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            width: 200px;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .settings-btn {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .settings-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
+        }
+
+        .settings-btn.save {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--secondary);
+        }
+
+        /* Tasks Panel */
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .task-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .task-schedule {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .task-status {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 10px;
+        }
+
+        .task-status.active {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--secondary);
+        }
+
+        .task-status.paused {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+        }
+
+        /* Chat Input Area */
+        .chat-input-area {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-row input {
+            flex: 1;
         }
 
         /* Sessions Panel */
@@ -925,61 +1032,149 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Hidden Panel Views -->
-    <div id="sessions-panel" class="panel-content">
+    <!-- Sessions Panel -->
+    <div id="sessions-panel" class="panel-content" style="padding: 20px;">
         <div class="panel">
             <div class="panel-title">Active Sessions</div>
             <div id="sessions-list">
                 <div class="session-item">
-                    <span class="session-key">main:dashboard</span>
-                    <span class="session-status">● Active</span>
+                    <span class="session-key">Loading...</span>
+                </div>
+            </div>
+            <button class="settings-btn" onclick="loadSessions()" style="margin-top: 10px;">🔄 Refresh Sessions</button>
+        </div>
+    </div>
+
+    <!-- Tools Panel -->
+    <div id="tools-panel" class="panel-content" style="padding: 20px;">
+        <div class="panel">
+            <div class="panel-title">Available Tools</div>
+            <div class="tool-grid" id="tools-list">
+                <div class="tool-item">Loading...</div>
+            </div>
+            <button class="settings-btn" onclick="loadTools()" style="margin-top: 10px;">🔄 Refresh Tools</button>
+        </div>
+    </div>
+
+    <!-- Memory Panel -->
+    <div id="memory-panel" class="panel-content" style="padding: 20px;">
+        <div class="panel">
+            <div class="panel-title">Memory Files</div>
+            <div id="memory-list">
+                <div class="memory-item" onclick="loadMemory('MEMORY.md')">📄 MEMORY.md</div>
+                <div class="memory-item" onclick="loadMemory('AGENTS.md')">📄 AGENTS.md</div>
+                <div class="memory-item" onclick="loadMemory('SOUL.md')">📄 SOUL.md</div>
+                <div class="memory-item" onclick="loadMemory('USER.md')">📄 USER.md</div>
+            </div>
+            <div id="memory-content" style="margin-top: 15px; display: none;">
+                <div class="panel-title">Content</div>
+                <textarea id="memory-editor" style="width: 100%; height: 200px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); padding: 10px; font-size: 12px; font-family: monospace;"></textarea>
+                <button class="settings-btn save" onclick="saveMemory()" style="margin-top: 10px;">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Panel -->
+    <div id="tasks-panel" class="panel-content" style="padding: 20px;">
+        <div class="panel">
+            <div class="panel-title">Scheduled Tasks (Cron)</div>
+            <div id="tasks-list">
+                <div class="task-item">
+                    <div>
+                        <div class="task-name">Loading...</div>
+                    </div>
+                </div>
+            </div>
+            <button class="settings-btn" onclick="loadTasks()" style="margin-top: 10px;">🔄 Refresh Tasks</button>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="panel-content" style="padding: 20px;">
+        <div class="panel">
+            <div class="panel-title">Settings</div>
+            
+            <div class="settings-section">
+                <div class="settings-title">🔗 Gateway Connection</div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Gateway URL</span>
+                    <input type="text" class="settings-input" id="gateway-url-input" placeholder="http://localhost:18789">
+                </div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">API Token (optional)</span>
+                    <input type="password" class="settings-input" id="api-token-input" placeholder="Leave empty for GUI mode">
+                </div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Auto-refresh</span>
+                    <select id="auto-refresh-input" class="settings-input" style="width: auto;">
+                        <option value="10000">10 seconds</option>
+                        <option value="30000" selected>30 seconds</option>
+                        <option value="60000">1 minute</option>
+                        <option value="0">Disabled</option>
+                    </select>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <button class="settings-btn save" onclick="saveSettings()">💾 Save Settings</button>
+                    <button class="settings-btn" onclick="testConnection()">🧪 Test Connection</button>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">🎨 Appearance</div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Theme</span>
+                    <select class="settings-input" style="width: auto;">
+                        <option value="dark">Dark (Default)</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">ℹ️ About</div>
+                <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.6;">
+                    <p><strong>JARVIS 24</strong> - OpenClaw AI Assistant</p>
+                    <p>Version: 2.3.0</p>
+                    <p>Powered by OpenClaw Gateway</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="tools-panel" class="panel-content">
-        <div class="panel">
-            <div class="panel-title">Available Tools</div>
-            <div class="tool-grid" id="tools-list">
-                <div class="tool-item">exec</div>
-                <div class="tool-item">browser</div>
-                <div class="tool-item">message</div>
-                <div class="tool-item">memory</div>
-                <div class="tool-item">cron</div>
-                <div class="tool-item">gateway</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="memory-panel" class="panel-content">
-        <div class="panel">
-            <div class="panel-title">Memory Files</div>
-            <div id="memory-list">
-                <div class="memory-item">MEMORY.md</div>
-                <div class="memory-item">AGENTS.md</div>
-                <div class="memory-item">SOUL.md</div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Configuration
-        const GATEWAY_HOST = window.location.hostname || 'localhost';
-        const GATEWAY_PORT = window.location.port || '18789';
-        const GATEWAY_URL = `http://${GATEWAY_HOST}:${GATEWAY_PORT}`;
+        // Configuration - Load from localStorage or use defaults
+        let config = {
+            gatewayUrl: localStorage.getItem('jarvis_gateway_url') || 'http://localhost:18789',
+            apiToken: localStorage.getItem('jarvis_api_token') || '',
+            autoRefresh: parseInt(localStorage.getItem('jarvis_auto_refresh') || '30000')
+        };
+
+        // Set default values in settings
+        document.getElementById('gateway-url-input').value = config.gatewayUrl;
+        document.getElementById('api-token-input').value = config.apiToken;
+        document.getElementById('auto-refresh-input').value = config.autoRefresh.toString();
 
         let chatHistory = [];
         let startTime = Date.now();
         let isProcessing = false;
+        let autoRefreshInterval = null;
+        let currentMemoryFile = null;
 
         // Initialize
         function init() {
             updateClock();
             setInterval(updateClock, 1000);
             
-            // Simulate system metrics (demo)
-            simulateMetrics();
+            // Load real data from gateway
+            loadSystemStatus();
+            loadSessions();
+            loadTools();
+            loadTasks();
             
             // Check gateway
             checkGateway();
@@ -987,8 +1182,216 @@
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboard);
             
+            // Start auto refresh
+            if (config.autoRefresh > 0) {
+                autoRefreshInterval = setInterval(() => {
+                    loadSystemStatus();
+                    loadSessions();
+                }, config.autoRefresh);
+            }
+            
             addFeedEntry('System', 'JARVIS 24 initialized');
             showToast('success', 'JARVIS 24 Online', 'Ready for commands');
+        }
+
+        // Gateway API functions
+        async function gatewayCall(endpoint, options = {}) {
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (config.apiToken) {
+                    headers['Authorization'] = `Bearer ${config.apiToken}`;
+                }
+                
+                const response = await fetch(`${config.gatewayUrl}${endpoint}`, {
+                    method: options.method || 'GET',
+                    headers,
+                    body: options.body ? JSON.stringify(options.body) : undefined,
+                    signal: AbortSignal.timeout(5000)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (e) {
+                console.log('Gateway call failed:', e.message);
+                return null;
+            }
+        }
+
+        // Load system status
+        async function loadSystemStatus() {
+            const status = await gatewayCall('/status');
+            
+            if (status) {
+                // Update status displays
+                document.getElementById('connection-status').textContent = 'Connected';
+                document.getElementById('connection-mode').textContent = 'API Mode';
+                document.getElementById('core-status').textContent = '● ONLINE - Ready for commands';
+                document.getElementById('gateway-url').textContent = config.gatewayUrl.replace('http://', '');
+                
+                // Update model info
+                if (status.model) {
+                    document.getElementById('model-name').textContent = status.model.split('/').pop() || status.model;
+                }
+                if (status.sessions !== undefined) {
+                    document.getElementById('session-count').textContent = status.sessions;
+                }
+                if (status.usage) {
+                    const used = status.usage.tokens?.used || 0;
+                    const limit = status.usage.tokens?.limit || 100000;
+                    document.getElementById('context-usage').textContent = Math.round(used/limit*100) + '%';
+                    document.getElementById('cost-today').textContent = '$' + (status.usage.cost || '0.00');
+                }
+                
+                addFeedEntry('Gateway', 'Status updated');
+            } else {
+                document.getElementById('connection-status').textContent = 'GUI Mode';
+                document.getElementById('connection-mode').textContent = 'Control UI';
+                document.getElementById('core-status').textContent = '● STANDBY - Use Control UI';
+            }
+        }
+
+        // Load sessions
+        async function loadSessions() {
+            const result = await gatewayCall('/api/sessions');
+            
+            const sessionsList = document.getElementById('sessions-list');
+            
+            if (result && result.sessions && result.sessions.length > 0) {
+                sessionsList.innerHTML = result.sessions.map(s => `
+                    <div class="session-item">
+                        <span class="session-key">${s.key || s.sessionKey || 'Unknown'}</span>
+                        <span class="session-status">● ${s.kind || 'active'}</span>
+                    </div>
+                `).join('');
+            } else {
+                sessionsList.innerHTML = `
+                    <div class="session-item">
+                        <span class="session-key">main:dashboard</span>
+                        <span class="session-status">● WebChat (current)</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Load tools
+        async function loadTools() {
+            const result = await gatewayCall('/api/tools');
+            
+            const toolsList = document.getElementById('tools-list');
+            
+            if (result && result.tools) {
+                toolsList.innerHTML = result.tools.map(tool => `
+                    <div class="tool-item" title="${tool.description || ''}">${tool.name}</div>
+                `).join('');
+            } else {
+                // Fallback demo tools
+                toolsList.innerHTML = `
+                    <div class="tool-item">exec</div>
+                    <div class="tool-item">browser</div>
+                    <div class="tool-item">message</div>
+                    <div class="tool-item">memory</div>
+                    <div class="tool-item">memory_search</div>
+                    <div class="tool-item">cron</div>
+                    <div class="tool-item">gateway</div>
+                    <div class="tool-item">nodes</div>
+                    <div class="tool-item">canvas</div>
+                    <div class="tool-item">image</div>
+                    <div class="tool-item">tts</div>
+                    <div class="tool-item">music_generate</div>
+                `;
+            }
+        }
+
+        // Load tasks (cron jobs)
+        async function loadTasks() {
+            const result = await gatewayCall('/api/cron');
+            
+            const tasksList = document.getElementById('tasks-list');
+            
+            if (result && result.jobs) {
+                tasksList.innerHTML = result.jobs.map(job => `
+                    <div class="task-item">
+                        <div>
+                            <div class="task-name">${job.name || job.id}</div>
+                            <div class="task-schedule">${job.schedule?.expr || 'Manual'}</div>
+                        </div>
+                        <span class="task-status ${job.enabled !== false ? 'active' : 'paused'}">
+                            ${job.enabled !== false ? '● Active' : '○ Paused'}
+                        </span>
+                    </div>
+                `).join('');
+            } else {
+                tasksList.innerHTML = `
+                    <div class="task-item">
+                        <div>
+                            <div class="task-name">No scheduled tasks</div>
+                            <div class="task-schedule">Configure in Gateway</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Memory functions
+        async function loadMemory(filename) {
+            currentMemoryFile = filename;
+            const result = await gatewayCall('/api/memory', {
+                method: 'POST',
+                body: { path: filename }
+            });
+            
+            const contentDiv = document.getElementById('memory-content');
+            const editor = document.getElementById('memory-editor');
+            
+            contentDiv.style.display = 'block';
+            
+            if (result && result.content) {
+                editor.value = result.content;
+            } else {
+                editor.value = `# ${filename}\n\nMemory content not available in GUI mode.`;
+            }
+        }
+
+        async function saveMemory() {
+            const editor = document.getElementById('memory-editor');
+            showToast('info', 'Saving', 'Memory save requires API token');
+        }
+
+        // Settings
+        function saveSettings() {
+            config.gatewayUrl = document.getElementById('gateway-url-input').value;
+            config.apiToken = document.getElementById('api-token-input').value;
+            config.autoRefresh = parseInt(document.getElementById('auto-refresh-input').value);
+            
+            localStorage.setItem('jarvis_gateway_url', config.gatewayUrl);
+            localStorage.setItem('jarvis_api_token', config.apiToken);
+            localStorage.setItem('jarvis_auto_refresh', config.autoRefresh.toString());
+            
+            // Restart auto refresh
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            if (config.autoRefresh > 0) {
+                autoRefreshInterval = setInterval(() => {
+                    loadSystemStatus();
+                    loadSessions();
+                }, config.autoRefresh);
+            }
+            
+            showToast('success', 'Settings Saved', 'Configuration updated');
+            addFeedEntry('Settings', 'Configuration saved');
+        }
+
+        async function testConnection() {
+            showToast('info', 'Testing', 'Checking gateway...');
+            
+            const status = await gatewayCall('/status');
+            
+            if (status) {
+                showToast('success', 'Connected!', 'Gateway is reachable');
+                addFeedEntry('Gateway', 'Connection test successful');
+            } else {
+                showToast('error', 'Failed', 'Cannot reach gateway');
+                addFeedEntry('Gateway', 'Connection test failed');
+            }
         }
 
 
@@ -1107,8 +1510,57 @@
             });
             event.target.closest('.nav-item').classList.add('active');
             
+            // Hide center content, show panel
+            document.querySelector('.center-content').style.display = 'none';
+            document.querySelector('.sidebar').style.display = 'none';
+            document.querySelector('.right-panel').style.display = 'none';
+            
+            // Hide all panels first
+            document.querySelectorAll('.panel-content').forEach(p => p.style.display = 'none');
+            
+            // Show selected panel
+            const panelMap = {
+                'dashboard': null,
+                'chat': null,
+                'sessions': 'sessions-panel',
+                'tools': 'tools-panel',
+                'memory': 'memory-panel',
+                'tasks': 'tasks-panel',
+                'settings': 'settings-panel'
+            };
+            
+            if (page === 'dashboard' || page === 'chat') {
+                document.querySelector('.center-content').style.display = 'flex';
+                document.querySelector('.sidebar').style.display = 'flex';
+                document.querySelector('.right-panel').style.display = 'flex';
+                // Remove back button if exists
+                const backBtn = document.getElementById('back-btn');
+                if (backBtn) backBtn.remove();
+            } else if (panelMap[page]) {
+                document.getElementById(panelMap[page]).style.display = 'block';
+                
+                // Show back button
+                if (!document.getElementById('back-btn')) {
+                    const backBtn = document.createElement('button');
+                    backBtn.id = 'back-btn';
+                    backBtn.className = 'settings-btn';
+                    backBtn.style.position = 'fixed';
+                    backBtn.style.top = '20px';
+                    backBtn.style.left = '20px';
+                    backBtn.style.zIndex = '1000';
+                    backBtn.innerHTML = '← Back to Dashboard';
+                    backBtn.onclick = () => navigate('dashboard');
+                    document.body.appendChild(backBtn);
+                }
+            }
+            
+            // Load data for specific panels
+            if (page === 'sessions') loadSessions();
+            if (page === 'tools') loadTools();
+            if (page === 'tasks') loadTasks();
+            
             addFeedEntry('Navigation', `Switched to ${page}`);
-            addChatMessage('system', `Navigated to ${page} panel`);
+            showToast('info', 'Navigation', `Opened ${page}`);
         }
 
         // Quick Actions
