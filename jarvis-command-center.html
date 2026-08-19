@@ -521,6 +521,134 @@
             box-shadow: var(--glow);
         }
 
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            min-width: 250px;
+            animation: slideIn 0.3s ease-out;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.success { border-left: 3px solid var(--secondary); }
+        .toast.error { border-left: 3px solid #ff6b6b; }
+        .toast.info { border-left: 3px solid var(--primary); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Loading Animation */
+        .loading-dots::after {
+            content: '.';
+            animation: dots 1s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Keyboard shortcuts hint */
+        .shortcuts-hint {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .kbd {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        /* Panel Content Areas */
+        .panel-content {
+            display: none;
+        }
+
+        .panel-content.active {
+            display: block;
+        }
+
+        /* Sessions Panel */
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .session-item .session-key {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .session-item .session-status {
+            color: var(--secondary);
+            font-size: 11px;
+        }
+
+        /* Tools Panel */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .tool-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tool-item:hover {
+            background: rgba(0, 212, 255, 0.15);
+        }
+
+        /* Memory Panel */
+        .memory-item {
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .memory-item:hover {
+            background: rgba(0, 255, 136, 0.1);
+        }
+
         /* Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -788,6 +916,50 @@
                 <button class="voice-btn" onclick="toggleVoice()" title="Voice">🎤</button>
                 <button class="send-btn" onclick="sendMessage()">SEND</button>
             </div>
+            <div class="shortcuts-hint">
+                <span class="kbd">Enter</span> Send · <span class="kbd">Ctrl+Enter</span> New line · <span class="kbd">Esc</span> Clear · <span class="kbd">/</span> Commands
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Hidden Panel Views -->
+    <div id="sessions-panel" class="panel-content">
+        <div class="panel">
+            <div class="panel-title">Active Sessions</div>
+            <div id="sessions-list">
+                <div class="session-item">
+                    <span class="session-key">main:dashboard</span>
+                    <span class="session-status">● Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tools-panel" class="panel-content">
+        <div class="panel">
+            <div class="panel-title">Available Tools</div>
+            <div class="tool-grid" id="tools-list">
+                <div class="tool-item">exec</div>
+                <div class="tool-item">browser</div>
+                <div class="tool-item">message</div>
+                <div class="tool-item">memory</div>
+                <div class="tool-item">cron</div>
+                <div class="tool-item">gateway</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="memory-panel" class="panel-content">
+        <div class="panel">
+            <div class="panel-title">Memory Files</div>
+            <div id="memory-list">
+                <div class="memory-item">MEMORY.md</div>
+                <div class="memory-item">AGENTS.md</div>
+                <div class="memory-item">SOUL.md</div>
+            </div>
         </div>
     </div>
 
@@ -799,6 +971,7 @@
 
         let chatHistory = [];
         let startTime = Date.now();
+        let isProcessing = false;
 
         // Initialize
         function init() {
@@ -811,8 +984,65 @@
             // Check gateway
             checkGateway();
             
+            // Keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboard);
+            
             addFeedEntry('System', 'JARVIS 24 initialized');
-            addFeedEntry('System', 'Connecting to OpenClaw...');
+            showToast('success', 'JARVIS 24 Online', 'Ready for commands');
+        }
+
+
+        // Keyboard shortcuts
+        function handleKeyboard(e) {
+            const input = document.getElementById('command-input');
+            
+            // Escape - clear input
+            if (e.key === 'Escape') {
+                if (document.activeElement === input && input.value) {
+                    input.value = '';
+                }
+            }
+            
+            // Ctrl+Enter - newline
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                input.value = input.value.substring(0, start) + '\n' + input.value.substring(end);
+                input.selectionStart = input.selectionEnd = start + 1;
+            }
+            
+            // Ctrl+L - clear chat
+            if (e.key === 'l' && e.ctrlKey) {
+                e.preventDefault();
+                clearChat();
+            }
+            
+            // / key - focus input
+            if (e.key === '/' && document.activeElement !== input) {
+                e.preventDefault();
+                input.focus();
+            }
+        }
+
+        // Toast notifications
+        function showToast(type, title, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'}</span>
+                <div>
+                    <div style="font-weight: 600;">${title}</div>
+                    <div style="color: var(--text-secondary); font-size: 11px;">${message}</div>
+                </div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         // Clock
@@ -936,39 +1166,73 @@
         }
 
         function processMessage(message) {
-            const cmd = message.toLowerCase();
+            const cmd = message.toLowerCase().trim();
             
-            // OpenClaw-nak küldés
+            isProcessing = true;
             addFeedEntry('JARVIS', `Processing: "${message}"`);
             
             if (cmd.startsWith('/')) {
-                // System commands
                 handleSystemCommand(cmd);
+            } else if (cmd === 'clear' || cmd === 'cls') {
+                clearChat();
+            } else if (cmd === 'help') {
+                showHelp();
             } else {
-                // Chat with JARVIS - open Control UI
-                addChatMessage('jarvis', `💡 I'll process your message. Opening Control UI for direct chat...`);
-                setTimeout(() => {
-                    window.open(`${GATEWAY_URL}/ui`, '_blank');
-                }, 1000);
+                addChatMessage('jarvis', `💬 Opening Control UI for direct chat...`);
+                showToast('info', 'Connecting', 'Opening Control UI...');
+                setTimeout(() => window.open(`${GATEWAY_URL}/ui`, '_blank'), 1000);
             }
+            
+            setTimeout(() => isProcessing = false, 500);
         }
 
         function handleSystemCommand(cmd) {
             switch(cmd) {
                 case '/help':
-                    addChatMessage('jarvis', `Available commands:\n• /status - System status\n• /sessions - List sessions\n• /clear - Clear chat\n• /help - Show this help`);
+                case '/':
+                    showHelp();
                     break;
                 case '/status':
                     checkGateway();
-                    addChatMessage('jarvis', `Status: Online\nModel: Minimax M2.5\nContext: 35%\nCost today: $7.51`);
+                    addChatMessage('jarvis', `📊 Status:\n• Gateway: Online\n• Model: Minimax M2.5\n• Context: 35%\n• Cost: $7.51`);
+                    break;
+                case '/sessions':
+                    addChatMessage('jarvis', '🧵 Sessions:\n• main:dashboard (active)\n• WebChat channel');
+                    break;
+                case '/tools':
+                    addChatMessage('jarvis', '🛠️ Tools:\n• exec, browser, message\n• memory, cron, gateway\n• nodes, canvas, image\n• tts, music_generate');
+                    navigate('tools');
+                    break;
+                case '/memory':
+                    addChatMessage('jarvis', '🧠 Memory:\n• MEMORY.md (long-term)\n• AGENTS.md (workspace)\n• SOUL.md (persona)');
+                    navigate('memory');
                     break;
                 case '/clear':
-                    document.getElementById('chat-output').innerHTML = '';
-                    addFeedEntry('System', 'Chat cleared');
+                case '/cls':
+                    clearChat();
+                    break;
+                case '/refresh':
+                    checkGateway();
+                    addChatMessage('jarvis', '✓ Data refreshed');
+                    showToast('success', 'Refresh', 'Dashboard updated');
+                    break;
+                case '/ui':
+                case '/control':
+                    openControlUI();
                     break;
                 default:
-                    addChatMessage('jarvis', `Unknown command: ${cmd}\nType /help for available commands.`);
+                    addChatMessage('jarvis', `❓ Unknown: ${cmd}\nType /help for commands`);
             }
+        }
+
+        function showHelp() {
+            addChatMessage('jarvis', `📖 Commands:\n\nSystem:\n• /status - System info\n• /sessions - Sessions\n• /tools - Tools list\n• /memory - Memory\n• /refresh - Refresh\n• /ui - Control UI\n• /clear - Clear chat\n\nChat:\n• Any text - Chat with JARVIS`);
+        }
+
+        function clearChat() {
+            document.getElementById('chat-output').innerHTML = '';
+            addFeedEntry('System', 'Chat cleared');
+            showToast('info', 'Chat', 'Cleared');
         }
 
         // Feed
