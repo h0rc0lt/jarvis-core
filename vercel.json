@@ -2,29 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "*.html",
+      "src": "index.html",
       "use": "@vercel/static"
     },
     {
-      "src": "jarvis-api.js",
+      "src": "jarvis-command-center.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-  "headers": [
+      "src": "/",
+      "dest": "/index.html"
+    },
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
+      "src": "/jarvis-command-center.html",
+      "dest": "/jarvis-command-center.html"
     }
   ]
 }

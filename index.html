@@ -2,10 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0;url=jarvis-core-app.html">
-    <title>JARVIS Core</title>
+    <meta http-equiv="refresh" content="0;url=jarvis-command-center.html">
+    <title>JARVIS 24 - Command Center</title>
+    <style>
+        body {
+            background: #0a0f1a;
+            color: #00d4ff;
+            font-family: system-ui, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .loading {
+            text-align: center;
+        }
+        .loading::after {
+            content: 'Loading JARVIS 24...';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: 'Loading JARVIS 24.'; }
+            40% { content: 'Loading JARVIS 24..'; }
+            60%, 100% { content: 'Loading JARVIS 24...'; }
+        }
+    </style>
 </head>
 <body>
-    <p>Redirecting to <a href="jarvis-core-app.html">JARVIS Core Dashboard</a>...</p>
+    <div class="loading"></div>
 </body>
 </html>
