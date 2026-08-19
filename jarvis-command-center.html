@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS 24 - Command Center</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --primary-dark: #0099cc;
+            --secondary: #00ff88;
+            --accent: #ff6b35;
+            --bg-dark: #0a0f1a;
+            --bg-panel: #0d1525;
+            --bg-card: #111d30;
+            --text-primary: #e0f4ff;
+            --text-secondary: #7eb8d8;
+            --border: rgba(0, 212, 255, 0.2);
+            --glow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 255, 136, 0.05) 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-dark) 0%, #0d1a2d 100%);
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, rgba(13, 21, 37, 0.95), rgba(17, 29, 48, 0.95));
+            border-bottom: 1px solid var(--border);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            color: var(--bg-dark);
+            box-shadow: var(--glow);
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 3px;
+        }
+
+        .logo-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--secondary);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--secondary); }
+            50% { opacity: 0.5; }
+        }
+
+        .clock {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--primary);
+            text-shadow: var(--glow);
+        }
+
+        .date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            gap: 20px;
+            padding: 20px;
+            min-height: calc(100vh - 82px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* Navigation */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 212, 255, 0.15);
+            border-left: 3px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        /* System Metrics */
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .metric-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+
+        .progress-fill.cpu { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+        .progress-fill.ram { background: linear-gradient(90deg, var(--secondary), var(--primary)); }
+        .progress-fill.disk { background: linear-gradient(90deg, var(--accent), #ffaa00); }
+        .progress-fill.network { background: linear-gradient(90deg, #aa66ff, var(--primary)); }
+
+        /* Center Content */
+        .center-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* JARVIS Core */
+        .core-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .core-sphere {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(0, 212, 255, 0.8), 
+                rgba(0, 150, 200, 0.4),
+                rgba(0, 50, 100, 0.2));
+            border-radius: 50%;
+            box-shadow: 
+                0 0 60px rgba(0, 212, 255, 0.4),
+                inset 0 0 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: corePulse 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        @keyframes corePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(0, 212, 255, 0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 0 80px rgba(0, 212, 255, 0.6); }
+        }
+
+        .core-sphere::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 212, 255, 0.3), transparent, rgba(0, 212, 255, 0.1), transparent);
+            animation: rotate 10s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .core-text {
+            position: relative;
+            z-index: 2;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        .core-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            letter-spacing: 4px;
+            margin-top: 5px;
+        }
+
+        .core-status {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--secondary);
+            margin-top: 15px;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .action-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Chat Output */
+        .chat-output {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .chat-message.user {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid var(--primary);
+            margin-left: 20%;
+        }
+
+        .chat-message.jarvis {
+            background: rgba(0, 255, 136, 0.08);
+            border-left: 3px solid var(--secondary);
+            margin-right: 20%;
+        }
+
+        .chat-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Live Feed */
+        .feed-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            border-left: 3px solid var(--secondary);
+        }
+
+        .feed-time {
+            color: var(--text-secondary);
+            font-size: 10px;
+            min-width: 60px;
+        }
+
+        /* Model Info */
+        .model-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .info-box-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-box-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--primary);
+            margin-top: 5px;
+        }
+
+        /* Command Input */
+        .command-bar {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .command-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .command-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .command-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 8px;
+            padding: 12px 25px;
+            color: var(--bg-dark);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: var(--glow);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        /* Voice Button */
+        .voice-btn {
+            width: 45px;
+            height: 45px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+
+        .voice-btn:hover {
+            background: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .connection-icon {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">J</div>
+            <div>
+                <div class="logo-text">JARVIS 24</div>
+                <div class="logo-sub">OPENCLAW AI ASSISTANT</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span id="connection-status">Connected to OpenClaw</span>
+            </div>
+            <div>
+                <div class="clock" id="clock">00:00:00</div>
+                <div class="date" id="date">Loading...</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <!-- Navigation -->
+            <div class="panel">
+                <div class="panel-title">Command Center</div>
+                <div class="nav-item active" onclick="navigate('dashboard')">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="navigate('chat')">
+                    <span class="nav-icon">💬</span>
+                    <span>AI Chat</span>
+                </div>
+                <div class="nav-item" onclick="navigate('sessions')">
+                    <span class="nav-icon">🧵</span>
+                    <span>Sessions</span>
+                </div>
+                <div class="nav-item" onclick="navigate('tools')">
+                    <span class="nav-icon">🛠️</span>
+                    <span>Tools</span>
+                </div>
+                <div class="nav-item" onclick="navigate('memory')">
+                    <span class="nav-icon">🧠</span>
+                    <span>Memory</span>
+                </div>
+                <div class="nav-item" onclick="navigate('tasks')">
+                    <span class="nav-icon">📋</span>
+                    <span>Tasks</span>
+                </div>
+                <div class="nav-item" onclick="navigate('settings')">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </div>
+            </div>
+
+            <!-- System Metrics -->
+            <div class="panel">
+                <div class="panel-title">System Metrics</div>
+                
+                <div class="metric">
+                    <div class="metric-label">
+                        <span>💻</span> CPU
+                    </div>
+                    <div class="metric-value" id="cpu-value">--%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill cpu" id="cpu-bar" style="width: 0%"></div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">
+                        <span>🧠</span> RAM
+                    </div>
+                    <div class="metric-value" id="ram-value">--%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ram" id="ram-bar" style="width: 0%"></div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">
+                        <span>💾</span> Disk
+                    </div>
+                    <div class="metric-value" id="disk-value">--%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill disk" id="disk-bar" style="width: 0%"></div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-label">
+                        <span>📡</span> Network
+                    </div>
+                    <div class="metric-value" id="network-value">--%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill network" id="network-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Connection -->
+            <div class="panel">
+                <div class="panel-title">Connection</div>
+                <div class="connection-status">
+                    <span class="connection-icon">🔗</span>
+                    <span id="gateway-url">localhost:18789</span>
+                </div>
+                <div class="connection-status">
+                    <span class="connection-icon">🌐</span>
+                    <span id="connection-mode">GUI Mode</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Content -->
+        <div class="center-content">
+            <!-- JARVIS Core -->
+            <div class="core-panel">
+                <div class="core-sphere">
+                    <div class="core-text">
+                        JARVIS
+                        <div class="core-sub">AI CORE</div>
+                    </div>
+                </div>
+                <div class="core-status" id="core-status">● ONLINE - Ready for commands</div>
+                
+                <div class="quick-actions" style="margin-top: 25px;">
+                    <div class="action-btn" onclick="executeQuickAction('status')">
+                        <div class="action-icon">📊</div>
+                        <div class="action-label">Status</div>
+                    </div>
+                    <div class="action-btn" onclick="executeQuickAction('sessions')">
+                        <div class="action-icon">🧵</div>
+                        <div class="action-label">Sessions</div>
+                    </div>
+                    <div class="action-btn" onclick="openControlUI()">
+                        <div class="action-icon">🎛️</div>
+                        <div class="action-label">Control UI</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Info -->
+            <div class="panel">
+                <div class="panel-title">OpenClaw Status</div>
+                <div class="model-info">
+                    <div class="info-box">
+                        <div class="info-box-label">Model</div>
+                        <div class="info-box-value" id="model-name">Minimax M2.5</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-box-label">Sessions</div>
+                        <div class="info-box-value" id="session-count">1</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-box-label">Context</div>
+                        <div class="info-box-value" id="context-usage">35%</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-box-label">Cost Today</div>
+                        <div class="info-box-value" id="cost-today">$7.51</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Output -->
+            <div class="chat-output" id="chat-output">
+                <div class="chat-message jarvis">
+                    <div>👋 Hello! I'm JARVIS, your OpenClaw AI Assistant.</div>
+                    <div class="chat-time">System • just now</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <!-- Live Feed -->
+            <div class="panel">
+                <div class="panel-title">Live Feed</div>
+                <div id="live-feed">
+                    <div class="feed-item">
+                        <div class="feed-time">--:--</div>
+                        <div>System initialized</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capabilities -->
+            <div class="panel">
+                <div class="panel-title">Capabilities</div>
+                <div style="font-size: 12px; line-height: 1.8; color: var(--text-secondary);">
+                    ✓ Voice assistance<br>
+                    ✓ AI Chat<br>
+                    ✓ Task automation<br>
+                    ✓ Reminders<br>
+                    ✓ Internet access<br>
+                    ✓ Smart analysis<br>
+                    ✓ Image generation<br>
+                    ✓ Multi-device control<br>
+                    ✓ Email messaging<br>
+                    ✓ System monitoring
+                </div>
+            </div>
+
+            <!-- Command Input -->
+            <div class="command-bar">
+                <input type="text" class="command-input" id="command-input" 
+                    placeholder="Type message and press Enter..." 
+                    onkeypress="handleCommand(event)">
+                <button class="voice-btn" onclick="toggleVoice()" title="Voice">🎤</button>
+                <button class="send-btn" onclick="sendMessage()">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const GATEWAY_HOST = window.location.hostname || 'localhost';
+        const GATEWAY_PORT = window.location.port || '18789';
+        const GATEWAY_URL = `http://${GATEWAY_HOST}:${GATEWAY_PORT}`;
+
+        let chatHistory = [];
+        let startTime = Date.now();
+
+        // Initialize
+        function init() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Simulate system metrics (demo)
+            simulateMetrics();
+            
+            // Check gateway
+            checkGateway();
+            
+            addFeedEntry('System', 'JARVIS 24 initialized');
+            addFeedEntry('System', 'Connecting to OpenClaw...');
+        }
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('date').textContent = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+        }
+
+        // Simulate metrics (demo)
+        function simulateMetrics() {
+            setInterval(() => {
+                const cpu = 15 + Math.random() * 30;
+                const ram = 40 + Math.random() * 25;
+                const disk = 45 + Math.random() * 10;
+                const network = 10 + Math.random() * 40;
+                
+                updateMetric('cpu', cpu);
+                updateMetric('ram', ram);
+                updateMetric('disk', disk);
+                updateMetric('network', network);
+            }, 2000);
+        }
+
+        function updateMetric(type, value) {
+            document.getElementById(`${type}-value`).textContent = `${Math.round(value)}%`;
+            document.getElementById(`${type}-bar`).style.width = `${value}%`;
+        }
+
+        // Gateway check
+        async function checkGateway() {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/status`, { 
+                    method: 'GET',
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (response.ok) {
+                    document.getElementById('connection-status').textContent = 'Connected';
+                    document.getElementById('connection-mode').textContent = 'API Mode';
+                    document.getElementById('core-status').textContent = '● ONLINE - Ready for commands';
+                    addFeedEntry('Gateway', 'Connected to OpenClaw');
+                }
+            } catch (e) {
+                document.getElementById('connection-status').textContent = 'GUI Mode';
+                document.getElementById('connection-mode').textContent = 'Control UI';
+                document.getElementById('core-status').textContent = '● STANDBY - Use Control UI';
+                addFeedEntry('Gateway', 'Running in GUI mode');
+            }
+        }
+
+        // Navigation
+        function navigate(page) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+            
+            addFeedEntry('Navigation', `Switched to ${page}`);
+            addChatMessage('system', `Navigated to ${page} panel`);
+        }
+
+        // Quick Actions
+        function executeQuickAction(action) {
+            addFeedEntry('Action', `Executing ${action}...`);
+            
+            if (action === 'status') {
+                checkGateway();
+                addChatMessage('jarvis', 'System status: All systems operational. Gateway is online.');
+            } else if (action === 'sessions') {
+                addChatMessage('jarvis', 'Active sessions: 1 (WebChat)\n\nSession details:\n- main:dashboard - active');
+            }
+        }
+
+        // Open Control UI
+        function openControlUI() {
+            addFeedEntry('JARVIS', 'Opening Control UI...');
+            window.open(`${GATEWAY_URL}/ui`, '_blank');
+        }
+
+        // Chat
+        function handleCommand(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('command-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addChatMessage('user', message);
+            input.value = '';
+            
+            // Process message
+            processMessage(message);
+        }
+
+        function addChatMessage(type, text) {
+            const chatOutput = document.getElementById('chat-output');
+            const time = new Date().toLocaleTimeString();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${type}`;
+            messageDiv.innerHTML = `
+                <div>${text}</div>
+                <div class="chat-time">${type === 'user' ? 'You' : 'JARVIS'} • ${time}</div>
+            `;
+            
+            chatOutput.appendChild(messageDiv);
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+        }
+
+        function processMessage(message) {
+            const cmd = message.toLowerCase();
+            
+            // OpenClaw-nak küldés
+            addFeedEntry('JARVIS', `Processing: "${message}"`);
+            
+            if (cmd.startsWith('/')) {
+                // System commands
+                handleSystemCommand(cmd);
+            } else {
+                // Chat with JARVIS - open Control UI
+                addChatMessage('jarvis', `💡 I'll process your message. Opening Control UI for direct chat...`);
+                setTimeout(() => {
+                    window.open(`${GATEWAY_URL}/ui`, '_blank');
+                }, 1000);
+            }
+        }
+
+        function handleSystemCommand(cmd) {
+            switch(cmd) {
+                case '/help':
+                    addChatMessage('jarvis', `Available commands:\n• /status - System status\n• /sessions - List sessions\n• /clear - Clear chat\n• /help - Show this help`);
+                    break;
+                case '/status':
+                    checkGateway();
+                    addChatMessage('jarvis', `Status: Online\nModel: Minimax M2.5\nContext: 35%\nCost today: $7.51`);
+                    break;
+                case '/clear':
+                    document.getElementById('chat-output').innerHTML = '';
+                    addFeedEntry('System', 'Chat cleared');
+                    break;
+                default:
+                    addChatMessage('jarvis', `Unknown command: ${cmd}\nType /help for available commands.`);
+            }
+        }
+
+        // Feed
+        function addFeedEntry(type, message) {
+            const feed = document.getElementById('live-feed');
+            const time = new Date().toLocaleTimeString();
+            
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            item.innerHTML = `
+                <div class="feed-time">${time}</div>
+                <div>${message}</div>
+            `;
+            
+            feed.insertBefore(item, feed.firstChild);
+            
+            // Keep only last 8 items
+            while (feed.children.length > 8) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        // Voice
+        function toggleVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                addChatMessage('jarvis', 'Voice recognition not supported in this browser.');
+                return;
+            }
+            
+            const recognition = new SpeechRecognition();
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('command-input').value = transcript;
+                addFeedEntry('Voice', `Heard: "${transcript}"`);
+            };
+            
+            recognition.start();
+            addFeedEntry('Voice', 'Listening...');
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
