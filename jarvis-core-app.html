@@ -564,7 +564,7 @@
                     <div style="display: grid; gap: 8px;">
                         <button onclick="executeCommand('status')" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">Get Status</button>
                         <button onclick="executeCommand('sessions')" style="background: rgba(0, 188, 212, 0.15); border: 1px solid rgba(0, 188, 212, 0.3); color: #00bcd4; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">List Sessions</button>
-                        <button onclick="openChat()" style="background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.5); color: #4caf50; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.3s;">💬 Chat with JARVIS</button>
+                        <button onclick="openChat()" style="background: rgba(76, 175, 80, 0.25); border: 1px solid rgba(76, 175, 80, 0.6); color: #4caf50; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.3s;">💬 Chat with JARVIS</button>
                     </div>
                 </div>
             </div>
@@ -572,7 +572,7 @@
 
         <!-- COMMAND BAR -->
         <div class="command-bar">
-            <input type="text" class="command-input" id="command-input" placeholder="Enter command or ask JARVIS..." onkeypress="handleCommandKey(event)">
+            <input type="text" class="command-input" id="command-input" placeholder="Type message and press Enter to chat with JARVIS..." onkeypress="handleCommandKey(event)">
             <button class="voice-button" onclick="toggleVoice()" title="Voice Command">🎤</button>
             <div class="status-right">
                 <span id="api-status">●</span>
@@ -802,7 +802,7 @@
 
         // Üzenet küldése JARVIS-nak (OpenClaw-nak)
         async function sendMessageToJarvis(message) {
-            addLogEntry('JARVIS', `Processing: ${message}`);
+            addLogEntry('JARVIS', `📤 Sending: "${message}"`);
             
             // Ha van API token, használjuk
             if (GATEWAY_TOKEN) {
@@ -813,14 +813,15 @@
                     });
                     
                     if (response && response.reply) {
-                        addLogEntry('JARVIS', response.reply);
+                        addLogEntry('JARVIS', '📥 Reply: ' + response.reply);
                     }
                 } catch (error) {
                     addLogEntry('Error', 'Failed to send message');
                 }
             } else {
-                // GUI mód: nyissa meg a Control UI-t
-                addLogEntry('JARVIS', 'Opening Control UI for message...');
+                // GUI mód: Control UI + útmutató
+                addLogEntry('JARVIS', '💡 Tip: Open Control UI to chat directly');
+                addLogEntry('JARVIS', '   Click "Chat with JARVIS" button →');
                 window.open(`${GATEWAY_URL}/ui`, '_blank');
             }
         }
