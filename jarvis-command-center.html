@@ -1154,10 +1154,16 @@
             autoRefresh: parseInt(localStorage.getItem('jarvis_auto_refresh') || '30000')
         };
 
-        // Set default values in settings
-        document.getElementById('gateway-url-input').value = config.gatewayUrl;
-        document.getElementById('api-token-input').value = config.apiToken;
-        document.getElementById('auto-refresh-input').value = config.autoRefresh.toString();
+        // Set default values in settings - wait for DOM
+        function loadSettingsToUI() {
+            const urlInput = document.getElementById('gateway-url-input');
+            const tokenInput = document.getElementById('api-token-input');
+            const refreshInput = document.getElementById('auto-refresh-input');
+            
+            if (urlInput) urlInput.value = config.gatewayUrl;
+            if (tokenInput) tokenInput.value = config.apiToken;
+            if (refreshInput) refreshInput.value = config.autoRefresh.toString();
+        }
 
         let chatHistory = [];
         let startTime = Date.now();
@@ -1170,14 +1176,14 @@
             updateClock();
             setInterval(updateClock, 1000);
             
-            // Load real data from gateway
+            // Load settings to UI
+            setTimeout(loadSettingsToUI, 100);
+            
+            // Load data from gateway
             loadSystemStatus();
             loadSessions();
             loadTools();
             loadTasks();
-            
-            // Check gateway
-            checkGateway();
             
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboard);
@@ -1196,6 +1202,12 @@
 
         // Gateway API functions
         async function gatewayCall(endpoint, options = {}) {
+            // Skip API calls in Vercel (CORS issue with localhost)
+            if (window.location.hostname.includes('vercel.app')) {
+                console.log('Skipping API call in Vercel (localhost not accessible)');
+                return null;
+            }
+            
             try {
                 const headers = { 'Content-Type': 'application/json' };
                 if (config.apiToken) {
@@ -1206,7 +1218,7 @@
                     method: options.method || 'GET',
                     headers,
                     body: options.body ? JSON.stringify(options.body) : undefined,
-                    signal: AbortSignal.timeout(5000)
+                    signal: AbortSignal.timeout(3000)
                 });
                 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1222,52 +1234,48 @@
             const status = await gatewayCall('/status');
             
             if (status) {
-                // Update status displays
                 document.getElementById('connection-status').textContent = 'Connected';
                 document.getElementById('connection-mode').textContent = 'API Mode';
                 document.getElementById('core-status').textContent = '● ONLINE - Ready for commands';
-                document.getElementById('gateway-url').textContent = config.gatewayUrl.replace('http://', '');
                 
-                // Update model info
                 if (status.model) {
-                    document.getElementById('model-name').textContent = status.model.split('/').pop() || status.model;
+                    document.getElementById('model-name').textContent = status.model.split('/').pop();
                 }
-                if (status.sessions !== undefined) {
+                if (status.sessions) {
                     document.getElementById('session-count').textContent = status.sessions;
                 }
-                if (status.usage) {
-                    const used = status.usage.tokens?.used || 0;
-                    const limit = status.usage.tokens?.limit || 100000;
-                    document.getElementById('context-usage').textContent = Math.round(used/limit*100) + '%';
-                    document.getElementById('cost-today').textContent = '$' + (status.usage.cost || '0.00');
-                }
-                
-                addFeedEntry('Gateway', 'Status updated');
             } else {
+                // GUI Mode - use demo data
                 document.getElementById('connection-status').textContent = 'GUI Mode';
                 document.getElementById('connection-mode').textContent = 'Control UI';
                 document.getElementById('core-status').textContent = '● STANDBY - Use Control UI';
             }
+            
+            addFeedEntry('System', 'Status loaded');
         }
 
         // Load sessions
         async function loadSessions() {
             const result = await gatewayCall('/api/sessions');
-            
             const sessionsList = document.getElementById('sessions-list');
             
-            if (result && result.sessions && result.sessions.length > 0) {
+            if (result && result.sessions) {
                 sessionsList.innerHTML = result.sessions.map(s => `
                     <div class="session-item">
-                        <span class="session-key">${s.key || s.sessionKey || 'Unknown'}</span>
-                        <span class="session-status">● ${s.kind || 'active'}</span>
+                        <span class="session-key">${s.key || s.sessionKey}</span>
+                        <span class="session-status">● ${s.kind}</span>
                     </div>
-                `).join('');
+                `).join('') || '<div class="session-item"><span class="session-key">No sessions</span></div>';
             } else {
+                // Demo data
                 sessionsList.innerHTML = `
                     <div class="session-item">
                         <span class="session-key">main:dashboard</span>
                         <span class="session-status">● WebChat (current)</span>
+                    </div>
+                    <div class="session-item">
+                        <span class="session-key">agent:main</span>
+                        <span class="session-status">● Running</span>
                     </div>
                 `;
             }
@@ -1276,15 +1284,14 @@
         // Load tools
         async function loadTools() {
             const result = await gatewayCall('/api/tools');
-            
             const toolsList = document.getElementById('tools-list');
             
             if (result && result.tools) {
                 toolsList.innerHTML = result.tools.map(tool => `
-                    <div class="tool-item" title="${tool.description || ''}">${tool.name}</div>
-                `).join('');
+                    <div class="tool-item">${tool.name}</div>
+                `).join('') || '<div class="tool-item">No tools</div>';
             } else {
-                // Fallback demo tools
+                // Demo data
                 toolsList.innerHTML = `
                     <div class="tool-item">exec</div>
                     <div class="tool-item">browser</div>
@@ -1302,31 +1309,39 @@
             }
         }
 
-        // Load tasks (cron jobs)
+        // Load tasks
         async function loadTasks() {
             const result = await gatewayCall('/api/cron');
-            
             const tasksList = document.getElementById('tasks-list');
             
             if (result && result.jobs) {
                 tasksList.innerHTML = result.jobs.map(job => `
                     <div class="task-item">
                         <div>
-                            <div class="task-name">${job.name || job.id}</div>
+                            <div class="task-name">${job.name}</div>
                             <div class="task-schedule">${job.schedule?.expr || 'Manual'}</div>
                         </div>
-                        <span class="task-status ${job.enabled !== false ? 'active' : 'paused'}">
-                            ${job.enabled !== false ? '● Active' : '○ Paused'}
+                        <span class="task-status ${job.enabled ? 'active' : 'paused'}">
+                            ${job.enabled ? '● Active' : '○ Paused'}
                         </span>
                     </div>
-                `).join('');
+                `).join('') || '<div class="task-item"><div class="task-name">No tasks</div></div>';
             } else {
+                // Demo data
                 tasksList.innerHTML = `
                     <div class="task-item">
                         <div>
-                            <div class="task-name">No scheduled tasks</div>
-                            <div class="task-schedule">Configure in Gateway</div>
+                            <div class="task-name">heartbeat-check</div>
+                            <div class="task-schedule">Every 30 minutes</div>
                         </div>
+                        <span class="task-status active">● Active</span>
+                    </div>
+                    <div class="task-item">
+                        <div>
+                            <div class="task-name">daily-backup</div>
+                            <div class="task-schedule">Daily at 00:00</div>
+                        </div>
+                        <span class="task-status active">● Active</span>
                     </div>
                 `;
             }
@@ -1484,8 +1499,18 @@
 
         // Gateway check
         async function checkGateway() {
+            // Skip in Vercel (localhost not accessible)
+            if (window.location.hostname.includes('vercel.app')) {
+                document.getElementById('connection-status').textContent = 'GUI Mode';
+                document.getElementById('connection-mode').textContent = 'Control UI';
+                document.getElementById('core-status').textContent = '● STANDBY - Use Control UI';
+                document.getElementById('gateway-url').textContent = 'Not accessible from Vercel';
+                addFeedEntry('System', 'Running in demo mode');
+                return;
+            }
+            
             try {
-                const response = await fetch(`${GATEWAY_URL}/status`, { 
+                const response = await fetch(`${config.gatewayUrl}/status`, { 
                     method: 'GET',
                     signal: AbortSignal.timeout(3000)
                 });
